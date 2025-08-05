@@ -117,18 +117,19 @@ const handleFileUpload = async () => {
       </ul>
     </div>
 
-    <!-- 原文展示区域 -->
-    <div class="result-area">
+    <!-- 原文和校对结果展示区域 -->
+    <div class="result-container">
+      <div class="result-area">
       <h2>原文</h2>
       <pre class="result-output">{{ inputText }}</pre>
-    </div>
-    <!-- 校对结果展示区域 -->
-    <div class="result-area">
+      </div>
+      <div class="result-area">
       <h2>校对结果</h2>
       <div v-if="isLoading" class="loading-container">
         <div class="spinner"></div>
       </div>
       <pre v-else-if="proofreadResults" class="result-output">{{ proofreadResults }}</pre>
+      </div>
     </div>
   </div>
 </template>
@@ -142,6 +143,11 @@ const handleFileUpload = async () => {
 
 .input-area {
   margin-bottom: 20px;
+  text-align: center;
+}
+
+.upload-area {
+  text-align: center;
 }
 
 .text-input {
@@ -149,6 +155,21 @@ const handleFileUpload = async () => {
   height: 200px;
   padding: 10px;
   margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #dcdfe6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.text-input:hover {
+  border-color: #c0c4cc;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: #409eff;
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
 }
 
 .proofread-btn {
@@ -157,6 +178,44 @@ const handleFileUpload = async () => {
   padding: 10px 20px;
   border: none;
   cursor: pointer;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.proofread-btn:hover {
+  background-color: #45a049;
+  transform: translateY(-2px);
+}
+
+.proofread-btn:active {
+  transform: translateY(0);
+}
+
+.upload-btn {
+  background-color: #2196F3;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.result-output {
+  font-size: 15px;
+  font-weight: bold;
+  font-family: 'Microsoft YaHei', sans-serif;
+  color:#006400;
+}
+
+
+.upload-btn:hover {
+  background-color: #0b7dda;
+  transform: translateY(-2px);
+}
+
+.upload-btn:active {
+  transform: translateY(0);
 }
 
 .upload-area {
@@ -182,6 +241,22 @@ const handleFileUpload = async () => {
 .file-list {
   list-style-type: none;
   padding: 0;
+}
+
+.result-container {
+  display: flex;
+  gap: 20px;
+}
+
+.result-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-output {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  min-height: 200px;
 }
 
 .result-area {
