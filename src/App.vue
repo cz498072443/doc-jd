@@ -131,7 +131,7 @@ const handleFileUpload = async () => {
     <!-- 文件上传区域 -->
     <div class="upload-area">
       <div @dragover.prevent @drop.prevent="handleDrop" class="drop-zone">
-        拖放文件到此处或点击上传
+        拖放文件到此处或点击上传  <span style="color: gray;font-weight: 800;font-size: 18px;">支持.docx、.pdf、.txt </span>
         <input ref="fileInputRef" type="file" class="hidden" @change="handleFileChange" accept=".doc,.docx,.pdf,.wps" />
       </div>
       <button @click="handleFileUpload" class="upload-btn">上传文件</button>
@@ -144,7 +144,7 @@ const handleFileUpload = async () => {
     <div class="result-container">
       <div class="result-area">
       <h2>原文</h2>
-      <pre class="result-output">{{ inputText }}</pre>
+      <pre class="result-output" style="color: black;">{{ inputText }}</pre>
       </div>
       <div class="result-area">
       <h2>校对结果</h2>
