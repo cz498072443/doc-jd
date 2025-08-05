@@ -50,19 +50,42 @@ const startProofreading = async () => {
       body: JSON.stringify({
         query: inputText.value,
         inputs: {},
-        response_mode: "blocking",
+        response_mode: "streaming",
         conversation_id: "",
         user: "abc-123"
       })
     })
 
-    const data = await response.json()
-    if (data.answer) {
-      // proofreadResults.value = data.choices[0].message.content
-      proofreadResults.value = data.answer
-      taskId.value = data.task_id
-      
-      console.log('任务ID:', taskId.value)
+    if (!response.ok) {
+      throw new Error('校对请求失败')
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    proofreadResults.value = ''
+    
+    while (true) {
+      isLoading.value = false
+      const { done, value } = await reader.read()
+      if (done) break
+      const chunk = decoder.decode(value, { stream: true })
+      const lines = chunk.split('\n')
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.slice(6)
+          if (dataStr === '[DONE]') break
+          try {
+            const data = JSON.parse(dataStr)
+            if (data.answer) {
+              proofreadResults.value += data.answer
+              taskId.value = data.task_id
+              console.log('任务ID:', taskId.value)
+            }
+          } catch (error) {
+            console.error('解析流式数据失败:', error)
+          }
+        }
+      }
     }
   } catch (error) {
     console.error('校对失败:', error)
