@@ -97,7 +97,7 @@ const handleFileUpload = async () => {
 
 <template>
   <div class="container">
-    <h1>智能文本校对系统</h1>
+    <h1>韶关移动智能文本校对系统</h1>
 
     <!-- 文字输入区域 -->
     <div class="input-area">
