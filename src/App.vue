@@ -62,41 +62,44 @@ const startProofreadingWithFiles = async () => {
 
 
 const handleFileUpload = async () => {
-  // 实际项目中需要实现文件上传逻辑
-  console.log('上传文件:', uploadedFiles.value)
+  try {
+    const formData = new FormData();
+    uploadedFiles.value.forEach((file) => {
+      formData.append('files', file);
+    });
+
+    const response = await fetch('http://localhost:3000/upload', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await response.json();
+    if (response.ok) {
+      inputText.value = data.content;
+      console.log('文件解析成功:', data.content);
+    } else {
+      throw new Error(data.error || '文件解析失败');
+    }
+  } catch (error) {
+    console.error('文件上传解析失败:', error);
+  }
 }
 </script>
 
 <template>
   <div class="container">
     <h1>智能文本校对系统</h1>
-    
+
     <!-- 文字输入区域 -->
     <div class="input-area">
-      <textarea
-        v-model="inputText"
-        placeholder="在此输入需要校对的文本..."
-        class="text-input"
-      ></textarea>
+      <textarea v-model="inputText" placeholder="在此输入需要校对的文本..." class="text-input"></textarea>
       <button @click="startProofreading" class="proofread-btn">开始校对</button>
     </div>
 
     <!-- 文件上传区域 -->
     <div class="upload-area">
-      <div
-        @click="fileInputRef.click()"
-        @dragover.prevent
-        @drop.prevent="handleDrop"
-        class="drop-zone"
-      >
+      <div @click="fileInputRef.click()" @dragover.prevent @drop.prevent="handleDrop" class="drop-zone">
         拖放文件到此处或点击上传
-        <input
-          ref="fileInputRef"
-          type="file"
-          class="hidden"
-          @change="handleFileChange"
-          accept=".doc,.docx,.pdf,.wps"
-        />
+        <input ref="fileInputRef" type="file" class="hidden" @change="handleFileChange" accept=".doc,.docx,.pdf,.wps" />
       </div>
       <button @click="handleFileUpload" class="upload-btn">上传文件</button>
       <ul class="file-list">
@@ -104,6 +107,11 @@ const handleFileUpload = async () => {
       </ul>
     </div>
 
+    <!-- 原文展示区域 -->
+    <div class="result-area">
+      <h2>原文</h2>
+      <pre class="result-output">{{ inputText }}</pre>
+    </div>
     <!-- 校对结果展示区域 -->
     <div class="result-area" v-if="proofreadResults">
       <h2>校对结果</h2>
