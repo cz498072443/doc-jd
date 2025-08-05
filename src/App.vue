@@ -97,7 +97,7 @@ const handleFileUpload = async () => {
 
     <!-- 文件上传区域 -->
     <div class="upload-area">
-      <div @click="fileInputRef.click()" @dragover.prevent @drop.prevent="handleDrop" class="drop-zone">
+      <div @dragover.prevent @drop.prevent="handleDrop" class="drop-zone">
         拖放文件到此处或点击上传
         <input ref="fileInputRef" type="file" class="hidden" @change="handleFileChange" accept=".doc,.docx,.pdf,.wps" />
       </div>
