@@ -4,7 +4,22 @@ import axios from 'axios'
 
 const inputText = ref('')
 const uploadedFiles = ref([])
-const proofreadResults = ref([])
+const proofreadResults = ref('')
+const filteredProofreadResults = ref('')
+const hideThinkTags = ref(false)
+
+const toggleThinkTags = () => {
+  hideThinkTags.value = !hideThinkTags.value
+  updateFilteredResults()
+}
+
+const updateFilteredResults = () => {
+  if (hideThinkTags.value) {
+    filteredProofreadResults.value = proofreadResults.value.replace(/<think>.*?<\/think>/gs, '')
+  } else {
+    filteredProofreadResults.value = proofreadResults.value
+  }
+}
 const fileInputRef = ref(null)
 const isLoading = ref(false)
 let taskId = ref('')
@@ -45,7 +60,7 @@ const startProofreading = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer app-FpmxBxInScwBzw0LDUpmLLuM'
+        'Authorization': 'Bearer app-cFshei9I0pUawcwjX61pmVKI'
       },
       body: JSON.stringify({
         query: inputText.value,
@@ -77,10 +92,11 @@ const startProofreading = async () => {
           try {
             const data = JSON.parse(dataStr)
             if (data.answer) {
-              proofreadResults.value += data.answer
-              taskId.value = data.task_id
-              console.log('任务ID:', taskId.value)
-            }
+            proofreadResults.value += data.answer
+            updateFilteredResults()
+            taskId.value = data.task_id
+            console.log('任务ID:', taskId.value)
+          }
           } catch (error) {
             console.error('解析流式数据失败:', error)
           }
@@ -148,10 +164,11 @@ const handleFileUpload = async () => {
       </div>
       <div class="result-area">
       <h2>校对结果</h2>
+      <button @click="toggleThinkTags" class="think-toggle-btn">隐藏think内容</button>
       <div v-if="isLoading" class="loading-container">
         <div class="spinner"></div>
       </div>
-      <pre v-else-if="proofreadResults" class="result-output">{{ proofreadResults }}</pre>
+      <pre v-else-if="proofreadResults" class="result-output">{{ filteredProofreadResults }}</pre>
       </div>
     </div>
   </div>
@@ -269,6 +286,33 @@ const handleFileUpload = async () => {
 .result-container {
   display: flex;
   gap: 20px;
+}
+
+
+
+.think-toggle-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background-color: #ff5722;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.think-toggle-btn:hover {
+  background-color: #e64a19;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+}
+
+.think-toggle-btn:active {
+  transform: translateY(0);
 }
 
 .result-area {
