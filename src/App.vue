@@ -37,7 +37,10 @@ const startProofreading = async () => {
         stream: false
       })
     })
-    proofreadResults.value = response.data.suggestions
+    const data = await response.json()
+    if (data.choices && data.choices[0].message) {
+      proofreadResults.value = data.choices[0].message.content
+    }
   } catch (error) {
     console.error('校对失败:', error)
   }
@@ -58,10 +61,10 @@ const startProofreadingWithFiles = async () => {
 
 
 
-// const handleFileUpload = async () => {
-//   // 实际项目中需要实现文件上传逻辑
-//   console.log('上传文件:', uploadedFiles.value)
-// }
+const handleFileUpload = async () => {
+  // 实际项目中需要实现文件上传逻辑
+  console.log('上传文件:', uploadedFiles.value)
+}
 </script>
 
 <template>
@@ -102,13 +105,9 @@ const startProofreadingWithFiles = async () => {
     </div>
 
     <!-- 校对结果展示区域 -->
-    <div class="result-area" v-if="proofreadResults.length > 0">
+    <div class="result-area" v-if="proofreadResults">
       <h2>校对结果</h2>
-      <div v-for="(result, index) in proofreadResults" :key="index" class="result-item">
-        <p>错漏: {{ result.issue }}</p>
-        <p>原文: {{ result.originalText }}</p>
-        <p>建议: {{ result.suggestedText }}</p>
-      </div>
+      <pre class="result-output">{{ proofreadResults }}</pre>
     </div>
   </div>
 </template>
@@ -172,5 +171,13 @@ const startProofreadingWithFiles = async () => {
   border: 1px solid #ddd;
   padding: 10px;
   margin-bottom: 10px;
+}
+
+.result-output {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 </style>
