@@ -6,6 +6,8 @@ const inputText = ref('')
 const uploadedFiles = ref([])
 const proofreadResults = ref([])
 const fileInputRef = ref(null)
+const isLoading = ref(false)
+let taskId = ref('')
 
 const handleFileChange = (event) => {
   uploadedFiles.value = Array.from(event.target.files)
@@ -19,47 +21,55 @@ const handleDrop = (e) => {
 }
 
 const startProofreading = async () => {
+  isLoading.value = true
   try {
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
+    // const response = await fetch('https://api.deepseek.com/chat/completions', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     'Authorization': 'Bearer sk-94322f0edbd64367af06d7c02d7ce375'
+    //   },
+    //   body: JSON.stringify({
+    //     model: "deepseek-chat",
+    //     messages: [
+    //       {
+    //         role: "user",
+    //         content: "请校对以下文本：\n\n" + inputText.value
+    //       }
+    //     ],
+    //     stream: false
+    //   })
+    // })
+
+    const response = await fetch('https://api.dify.ai/v1/chat-messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer sk-94322f0edbd64367af06d7c02d7ce375'
+        'Authorization': 'Bearer app-FpmxBxInScwBzw0LDUpmLLuM'
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          {
-            role: "user",
-            content: "请校对以下文本：\n\n" + inputText.value
-          }
-        ],
-        stream: false
+        query: inputText.value,
+        inputs: {},
+        response_mode: "blocking",
+        conversation_id: "",
+        user: "abc-123"
       })
     })
+
     const data = await response.json()
-    if (data.choices && data.choices[0].message) {
-      proofreadResults.value = data.choices[0].message.content
+    if (data.answer) {
+      // proofreadResults.value = data.choices[0].message.content
+      proofreadResults.value = data.answer
+      taskId.value = data.task_id
+      
+      console.log('任务ID:', taskId.value)
     }
   } catch (error) {
     console.error('校对失败:', error)
+  } finally {
+    isLoading.value = false
   }
 }
-
-const startProofreadingWithFiles = async () => {
-  try {
-    const formData = new FormData()
-    uploadedFiles.value.forEach((file) => {
-      formData.append('files', file)
-      text: inputText.value
-    })
-    proofreadResults.value = response.data.suggestions
-  } catch (error) {
-    console.error('校对失败:', error)
-  }
-}
-
-
 
 const handleFileUpload = async () => {
   try {
@@ -113,9 +123,12 @@ const handleFileUpload = async () => {
       <pre class="result-output">{{ inputText }}</pre>
     </div>
     <!-- 校对结果展示区域 -->
-    <div class="result-area" v-if="proofreadResults">
+    <div class="result-area">
       <h2>校对结果</h2>
-      <pre class="result-output">{{ proofreadResults }}</pre>
+      <div v-if="isLoading" class="loading-container">
+        <div class="spinner"></div>
+      </div>
+      <pre v-else-if="proofreadResults" class="result-output">{{ proofreadResults }}</pre>
     </div>
   </div>
 </template>
@@ -179,6 +192,27 @@ const handleFileUpload = async () => {
   border: 1px solid #ddd;
   padding: 10px;
   margin-bottom: 10px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #4CAF50;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .result-output {
