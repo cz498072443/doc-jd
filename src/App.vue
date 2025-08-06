@@ -25,14 +25,37 @@ const isLoading = ref(false)
 let taskId = ref('')
 
 const handleFileChange = (event) => {
-  uploadedFiles.value = Array.from(event.target.files)
+  const newFiles = Array.from(event.target.files)
+  // 避免重复添加相同的文件
+  newFiles.forEach(file => {
+    const isDuplicate = uploadedFiles.value.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified)
+    if (!isDuplicate) {
+      uploadedFiles.value.push(file)
+    }
+  })
+  // 清空文件输入，以便可以重复选择同一个文件
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
 }
 
 const handleDrop = (e) => {
   e.preventDefault()
   if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-    uploadedFiles.value = Array.from(e.dataTransfer.files)
+    const newFiles = Array.from(e.dataTransfer.files)
+    // 避免重复添加相同的文件
+    newFiles.forEach(file => {
+      const isDuplicate = uploadedFiles.value.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified)
+      if (!isDuplicate) {
+        uploadedFiles.value.push(file)
+      }
+    })
   }
+}
+
+// 添加删除文件的函数
+const removeFile = (index) => {
+  uploadedFiles.value.splice(index, 1)
 }
 
 const startProofreading = async () => {
@@ -60,7 +83,7 @@ const startProofreading = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer app-cFshei9I0pUawcwjX61pmVKI'
+        'Authorization': 'Bearer app-I79udjMgAhKMqvIBdcBHpmqI'
       },
       body: JSON.stringify({
         query: inputText.value,
@@ -123,13 +146,15 @@ const handleFileUpload = async () => {
     });
     const data = await response.json();
     if (response.ok) {
-      inputText.value = data.content;
+      inputText.value = data.content || '';
       console.log('文件解析成功:', data.content);
+      // 文件上传成功，等待用户手动点击开始校对按钮
     } else {
       throw new Error(data.error || '文件解析失败');
     }
   } catch (error) {
     console.error('文件上传解析失败:', error);
+    alert('文件上传解析失败: ' + error.message);
   }
 }
 </script>
@@ -151,9 +176,14 @@ const handleFileUpload = async () => {
         <input ref="fileInputRef" type="file" class="hidden" @change="handleFileChange" accept=".doc,.docx,.pdf,.wps" />
       </div>
       <button @click="handleFileUpload" class="upload-btn">上传文件</button>
-      <ul class="file-list">
-        <li v-for="(file, index) in uploadedFiles" :key="index">{{ file.name }}</li>
-      </ul>
+      <div class="file-list-container">
+        <transition-group name="file-item" tag="div">
+          <div v-for="(file, index) in uploadedFiles" :key="file.name + file.size + file.lastModified" class="file-item">
+            <span class="file-name">{{ file.name }}</span>
+            <button @click="removeFile(index)" class="delete-btn">删除</button>
+          </div>
+        </transition-group>
+      </div>
     </div>
 
     <!-- 原文和校对结果展示区域 -->
@@ -168,7 +198,7 @@ const handleFileUpload = async () => {
       <div v-if="isLoading" class="loading-container">
         <div class="spinner"></div>
       </div>
-      <pre v-else-if="proofreadResults" class="result-output">{{ filteredProofreadResults }}</pre>
+      <pre class="result-output" style="color: #006400;">{{ filteredProofreadResults || '' }}</pre>
       </div>
     </div>
   </div>
@@ -188,6 +218,7 @@ const handleFileUpload = async () => {
 
 .upload-area {
   text-align: center;
+  margin-bottom: 20px;
 }
 
 .text-input {
@@ -217,6 +248,7 @@ const handleFileUpload = async () => {
   color: white;
   padding: 10px 20px;
   border: none;
+  border-radius: 25px;
   cursor: pointer;
   display: inline-block;
   transition: all 0.3s ease;
@@ -232,63 +264,106 @@ const handleFileUpload = async () => {
 }
 
 .upload-btn {
-  background-color: #2196F3;
+  background-color: #4CAF50;
   color: white;
-  padding: 10px 20px;
   border: none;
+  padding: 12px 24px;
+  margin-top: 15px;
+  border-radius: 25px;
   cursor: pointer;
-  display: inline-block;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
 }
 
-.result-output {
-  font-size: 15px;
-  font-weight: bold;
-  font-family: 'Microsoft YaHei', sans-serif;
-  color:#006400;
-}
-
-
 .upload-btn:hover {
-  background-color: #0b7dda;
+  background-color: #45a049;
   transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
 }
 
 .upload-btn:active {
   transform: translateY(0);
 }
 
-.upload-area {
-  margin-bottom: 20px;
+.file-list-container {
+  margin-top: 15px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #dcdfe6;
+  background-color: #f5f7fa;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  animation: fadeIn 0.3s ease;
+}
+
+.file-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 10px;
+}
+
+.delete-btn {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background-color: #ff7875;
+}
+
+.delete-btn:active {
+  background-color: #ff1f1f;
 }
 
 .drop-zone {
-  border: 2px dashed #ccc;
-  padding: 40px;
+  border: 2px dashed #4CAF50;
+  padding: 30px 20px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  transition: all 0.3s ease;
   text-align: center;
-  margin-bottom: 10px;
-  cursor: pointer;
 }
 
-.upload-btn {
-  background-color: #2196F3;
-  color: white;
-  padding: 10px 20px;
-  border: none;
-  cursor: pointer;
+.drop-zone:hover {
+  border-color: #45a049;
+  background-color: #f0f8f0;
 }
 
-.file-list {
-  list-style-type: none;
-  padding: 0;
+.drop-zone:active {
+  border-color: #3d8b40;
 }
 
 .result-container {
   display: flex;
   gap: 20px;
 }
-
-
 
 .think-toggle-btn {
   position: fixed;
@@ -318,16 +393,20 @@ const handleFileUpload = async () => {
 .result-area {
   flex: 1;
   min-width: 0;
+  margin-top: 20px;
 }
 
 .result-output {
+  font-size: 15px;
+  font-weight: bold;
+  font-family: 'Microsoft YaHei', sans-serif;
+  color: #006400;
   white-space: pre-wrap;
   word-wrap: break-word;
   min-height: 200px;
-}
-
-.result-area {
-  margin-top: 20px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
 }
 
 .result-item {
@@ -357,11 +436,17 @@ const handleFileUpload = async () => {
   100% { transform: rotate(360deg); }
 }
 
-.result-output {
-  border: 1px solid #ddd;
-  padding: 10px;
-  margin-bottom: 10px;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
+.file-item-leave {
+  animation: fadeOut 0.3s ease;
 }
 </style>
